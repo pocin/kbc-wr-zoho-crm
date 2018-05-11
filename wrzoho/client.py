@@ -15,6 +15,9 @@ class BaseZohoCrmClient(requests.Session):
         self._access_token = None
         self.base_url = base_url
 
+        if refresh_token is not None:
+            self.refresh_access_token()
+
     @property
     def access_token(self):
         if self._access_token is None:
@@ -75,7 +78,7 @@ class BaseZohoCrmClient(requests.Session):
             "grant_type": "refresh_token"
         }
 
-        resp = self.request("POST", url=url, params=params)
+        resp = self.post(url=url, params=params)
         resp.raise_for_status()
         try:
             self.access_token = resp.json()["access_token"]
@@ -86,12 +89,29 @@ class BaseZohoCrmClient(requests.Session):
     def _build_url(self, endpoint):
         return urljoin(self.base_url, endpoint.lstrip("/"))
 
+    def request(self, method, url, *args, **kwargs):
+        resp = super().request(method, url, *args, **kwargs)
+        resp.raise_for_status()
+        return resp
+
+
 class ZohoCrmClient(BaseZohoCrmClient):
     def upsert_contact(self, payload, duplicate_check_fields=None):
         params = {
             "duplicate_check_fields": duplicate_check_fields
         }
-        self.post(self._build_url("/Contacts/upsert"), params=params, json=payload).json()
+        return self.post(self._build_url("/Contacts/upsert"), params=params, json=payload).json()
+
+    def update_contact(self, payload):
+        return self.put(self._build_url("/Contacts"), json=payload).json()
 
     def create_contact(self, payload):
-        self.post(self._build_url("/Contacts"), json=payload).json()
+        return self.post(self._build_url("/Contacts"), json=payload).json()
+
+    def delete_contact(self, ids):
+        if len(ids) > 100:
+            raise ValueError("Maximum 100 ids can be deleted at one time")
+        return self.delete(
+            self._build_url("/Contacts"),
+            params={"ids": ','.join(map(str, ids))}
+        ).json()
