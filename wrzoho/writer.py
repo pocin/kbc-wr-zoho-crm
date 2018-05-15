@@ -1,7 +1,12 @@
 import csv
 import json
+import re
 import jsontangle
 
+AVAILABLE_MODULES = {"leads", "accounts", "contacts", "deals", "campaigns",
+                     "cases", "solutions", "products", "vendors", "pricebooks",
+                     "quotes", "salesorders", "purchaseorders", "invoices",
+                     "custom", "notes"}
 
 
 def parse_input_csv(path):
@@ -37,9 +42,34 @@ def parse_input_csv(path):
             yield jsontangle.tangle(line)
 
 def parse_input_do_action(path_csv, client):
-    # update_contact
-    action_entity = path_csv.stem
+    """ parse the input csv and use the rows as payload
 
+    The action is decide from the name of the input csv
+
+    Args:
+        path_csv (pathlib.Path): path/to/input.csv
+        clinet (wrzoho.client.ZHOCRMClient) instance
+    """
+    # update_contact
+    action, module = decide_action_from_filename(path_csv)
+
+def decide_action_from_filename(path_csv):
+    action_module = path_csv.stem
+    valid_fname_pattern = re.compile(r'^(?P<action>create|update|delete)_(?P<module>\w+)')
+    parts = valid_fname_pattern.match(action_module)
+    if not parts:
+        raise ValueError(
+            "Don't know what to do with {}, expecting "
+            "{{create|update|delete}}_{{module_name}}.csv!".format(path_csv))
+
+    action, module = parts.groups()
+    if module not in AVAILABLE_MODULES:
+        raise ValueError(
+            "module name in the input csv must be one of "
+            "'{}', not '{}'".format(AVAILABLE_MODULES, module))
+
+    else:
+        return action, module
 
 
 def main():
