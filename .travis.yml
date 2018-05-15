@@ -8,7 +8,7 @@ before_script:
   - docker build . -t $APP_IMAGE
 
 script:
-  - "docker run -rm \
+  - "docker run --rm \
     -e ZOHO_CLIENT_ID \
     -e ZOHO_CLIENT_SECRET \
     -e ZOHO_REDIRECT_URI \

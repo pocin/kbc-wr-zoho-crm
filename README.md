@@ -1,4 +1,11 @@
+
 # Zoho CRM writer
+
+---
+
+[![Build Status](https://travis-ci.org/pocin/kbc-wr-zoho-crm.svg?branch=master)](https://travis-ci.org/pocin/kbc-wr-zoho-crm)
+---
+
 
 `create`, `update` and `delete` ZOHO CRM records using [the bulk api](https://www.zoho.com/crm/help/api/v2/#record-api)
 
@@ -30,7 +37,8 @@ Get credentials from https://www.zoho.com/crm/help/api/v2/#oauth-request
 ## Get refresh token
 
 ```bash
-$ git clone https://github.com/pocin/kbc-wr-zoho-crm
+$ git clone https://github.com/pocin/kbc-wr-zoho-crm 
+$ cd kbc-wr-zoho-crm
 $ python3
 
 from wrzoho.client import BaseZohoCrmClient
@@ -49,6 +57,7 @@ print(cl.authorization_url())
 # will look like this 
 # 'http://127.0.0.1/callback?code=this&location=eu&accounts-server=https%3A%2F%2Faccounts.zoho.eu'
 grant_url = "" #the url above
+
 print(cl.convert_grant_token(url_with_grant_token=grant_url))
 # will give you refresh tokens, write it down!
 {'access_token': 'token a',
