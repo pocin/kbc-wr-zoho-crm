@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseZohoCrmClient(requests.Session):
-    def __init__(self,  redirect_uri, client_id, client_secret, refresh_token=None, base_url='https://www.zohoapis.com/crm/v2/'):
+    def __init__(self, redirect_uri, client_id, client_secret, refresh_token=None, base_url='https://www.zohoapis.com/crm/v2/'):
         super().__init__()
         self.redirect_uri = redirect_uri
         self.client_id = client_id
@@ -30,7 +30,7 @@ class BaseZohoCrmClient(requests.Session):
         logger.debug("Setting new access token")
         self._access_token = new_token
 
-        logger.debug("Updating TTD-Auth header")
+        logger.debug("Updating Zoho auth header")
         self.headers.update({"Authorization": "Zoho-oauthtoken {}".format(new_token)})
 
 
