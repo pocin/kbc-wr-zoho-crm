@@ -83,5 +83,13 @@ KBC Writer,Can Be Deleted,"Functional test @{}z""".format(datetime.datetime.utcn
     assert updated_record['message'] == 'record updated'
 
     # delete it
-    delete_resp = client.delete_contacts(ids=[new_contact_id])
-    assert delete_resp['data'][0]['status'] == 'success'
+    delete_csv = tmpdir.join("delete_contacts.csv")
+    delete_csv.write("""id
+{}""".format(new_contact_id))
+    delete_csv_path = pathlib.Path(delete_csv.strpath)
+    delete_logs = list(wrzoho.writer.parse_input_do_action(delete_csv_path, client))
+
+    deleted_record = delete_logs[0]['data'][0]
+
+    assert deleted_record['status'] == 'success'
+    assert deleted_record['message'] == 'record deleted'

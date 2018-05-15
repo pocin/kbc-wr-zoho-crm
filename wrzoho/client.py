@@ -125,8 +125,6 @@ class ZohoCrmClient(BaseZohoCrmClient):
         return self.post(self._build_url(module), json=payload).json()
 
     def generic_delete(self, module, ids):
-        if len(ids) > 100:
-            raise ValueError("Maximum 100 ids can be deleted at one time")
         return self.delete(
             self._build_url(module),
             params={"ids": ','.join(map(lambda x: str(x).strip(), ids))}

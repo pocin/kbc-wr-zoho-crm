@@ -60,7 +60,7 @@ def parse_input_do_action(path_csv, client):
     action, module = decide_action_from_filename(path_csv)
     serialized_rows = parse_input_csv(path_csv)
     if action == "delete":
-        yield from _do_delete(client, serialized_rows)
+        yield from _do_delete(client, serialized_rows, module=module)
     else:
         yield from _do_update_create(client, serialized_rows, action=action, module=module)
 
@@ -76,14 +76,22 @@ def _do_update_create(client, input_rows, action, module):
         logger.info("Processing chunk")
         payload = {"data": list(chunk)}
         json_response = getattr(client, 'generic_' + action)(module=module, payload=payload)
-        logger.info("Batch processed %s", json_response)
+        logger.info("Chunk processed %s", json_response)
         yield json_response
 
-def _do_delete(client, input_rows):
+def _do_delete(client, input_rows, module):
     """
 
     """
-    raise NotImplementedError("TODO: need to pass the ids as params in querystring")
+    # input rows is  a list of dicts [{'id': '1234'}, {'id': '5661'}]
+    # we need chunk_of_ids to be [1234, 5661, ...]
+    for chunk_of_ids in chunk_input_rows(
+            (row['id'] for row in input_rows),
+            n=100):
+        logger.info("Processing chunk")
+        json_response = client.generic_delete(module=module, ids=chunk_of_ids)
+        logger.info("Chunk processed %s", json_response)
+        yield json_response
 
 def chunk_input_rows(iterable, n=100):
 
