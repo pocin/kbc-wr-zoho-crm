@@ -43,3 +43,17 @@ def test_deciding_action_valid_actions():
     for path, expected in cases:
         action_module = wrzoho.writer.decide_action_from_filename(path)
         assert action_module == expected
+
+def test_grouping_input_data():
+    rows = ({"foo": i} for i in range(7))
+    chunks = list(wrzoho.writer.chunk_input_rows(rows, n=5))
+    # there are two chunks
+    assert len(chunks) == 2
+    # first has 5 elements (n=5 above)
+    assert len(list(chunks[0])) == 5
+    # second has the remainig 3
+    last_chunk = list(chunks[1])
+    assert len(last_chunk) == 2
+    # [{"foo": 5}, {"foo": 6}]
+    last_element = last_chunk[-1]
+    assert last_element['foo'] == 6

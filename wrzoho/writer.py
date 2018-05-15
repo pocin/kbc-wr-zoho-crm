@@ -2,6 +2,7 @@ import csv
 import json
 import re
 import jsontangle
+from itertools import zip_longest, takewhile
 
 AVAILABLE_MODULES = {"leads", "accounts", "contacts", "deals", "campaigns",
                      "cases", "solutions", "products", "vendors", "pricebooks",
@@ -52,6 +53,17 @@ def parse_input_do_action(path_csv, client):
     """
     # update_contact
     action, module = decide_action_from_filename(path_csv)
+    serialized_rows = parse_input_csv(path_csv)
+
+
+
+def chunk_input_rows(iterable, n=100):
+
+    # https://docs.python.org/3/library/itertools.html#itertools-recipes
+    args = [iter(iterable)] * n
+    for chunk in zip_longest(*args):
+        yield takewhile(lambda x: x is not None, chunk)
+
 
 def decide_action_from_filename(path_csv):
     action_module = path_csv.stem
