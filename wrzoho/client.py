@@ -57,7 +57,7 @@ class BaseZohoCrmClient(requests.Session):
         url = urljoin(self.base_tokens_url, "token")
 
         params = {
-            "code": grant_token,
+            "code": token,
             "redirect_uri": self.redirect_uri,
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -96,7 +96,6 @@ class BaseZohoCrmClient(requests.Session):
 
 
     def request(self, method, url, *args, **kwargs):
-        logger.debug("Making %s request to %s", method, url)
         resp = super().request(method, url, *args, **kwargs)
         resp.raise_for_status()
         return resp

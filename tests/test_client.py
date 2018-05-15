@@ -93,3 +93,33 @@ KBC Writer,Can Be Deleted,"Functional test @{}z""".format(datetime.datetime.utcn
 
     assert deleted_record['status'] == 'success'
     assert deleted_record['message'] == 'record deleted'
+
+def test_running_main_machinery(tmpdir, credentials, caplog):
+    intables = tmpdir.mkdir('in').mkdir('tables')
+    create_table = intables.join('create_contacts.csv')
+    create_table.write("""Last_Name,Description
+KBC FUNCTIONAL WRITER, CAN BE DELETED""")
+
+    params = credentials.copy()
+    params['#refresh_token'] = params.pop('refresh_token')
+    params['#client_secret'] = params.pop('client_secret')
+    intables_path = pathlib.Path(intables.strpath)
+    with caplog.at_level(logging.DEBUG):
+        wrzoho.writer._main(intables_path, params)
+    # last log record
+    assert "Processed 1 records" in caplog.text
+
+
+def test_running_main_machinery_fails_on_wrong_input(tmpdir, credentials, caplog):
+    intables = tmpdir.mkdir('in').mkdir('tables')
+    create_table = intables.join('unknownaction_contacts.csv')
+    create_table.write("""Last_Name,Description
+KBC FUNCTIONAL WRITER, CAN BE DELETED""")
+
+    params = credentials.copy()
+    params['#refresh_token'] = params.pop('refresh_token')
+    params['#client_secret'] = params.pop('client_secret')
+    intables_path = pathlib.Path(intables.strpath)
+    with pytest.raises(ValueError) as err:
+        wrzoho.writer._main(intables_path, params)
+    assert err.match("Don't know what to do with")

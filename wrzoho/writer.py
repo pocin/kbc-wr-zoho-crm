@@ -5,6 +5,10 @@ import jsontangle
 from itertools import zip_longest, takewhile
 import logging
 import sys
+import keboola
+from pathlib import Path
+import voluptuous as vp
+from wrzoho.client import ZohoCrmClient
 
 logger = logging.getLogger(__name__)
 # logger.addHandler(logging.StreamHandler(stream=sys.stdout))
@@ -88,9 +92,8 @@ def _do_delete(client, input_rows, module):
     for chunk_of_ids in chunk_input_rows(
             (row['id'] for row in input_rows),
             n=100):
-        logger.info("Processing chunk")
+        logger.debug("Processing chunk")
         json_response = client.generic_delete(module=module, ids=chunk_of_ids)
-        logger.info("Chunk processed %s", json_response)
         yield json_response
 
 def chunk_input_rows(iterable, n=100):
@@ -121,7 +124,45 @@ def decide_action_from_filename(path_csv):
     else:
         return action, module
 
+def validate_params(raw):
+    schema = vp.Schema({
+        vp.Optional("debug"): vp.Coerce(bool),
+        "redirect_uri": str,
+        "client_id": str,
+        "#clinet_secret": str,
+        "#refresh_token": str,
+        "base_url": str,
+        "base_tokens_url": str
+    })
 
-def main():
-    pass
+    return schema(raw)
 
+def main(datadir):
+    intables = Path(datadir) / 'in/tables'
+    params = validate_params(keboola.docker.Config(datadir).get_parameters())
+    if params.get('debug'):
+        logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+    else:
+        logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    _main(intables, params)
+
+
+def _main(intables, params):
+    credentials = {
+        "refresh_token": params['#refresh_token'],
+        "client_id": params['client_id'],
+        "client_secret": params['#client_secret'],
+        "redirect_uri": params['redirect_uri'],
+        "base_url": params['base_url'],
+        "base_tokens_url": params['base_tokens_url']
+    }
+
+    client = ZohoCrmClient(**credentials)
+    for csv_path in intables.glob('*.csv'):
+        with client:
+            batch_results = parse_input_do_action(csv_path, client)
+            processed = 0
+            for batch in batch_results:
+                processed += len(batch["data"])
+                # we need to consume the generator!
+                logger.info("Processed %s records", processed)
