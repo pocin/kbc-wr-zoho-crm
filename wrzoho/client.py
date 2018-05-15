@@ -89,6 +89,7 @@ class BaseZohoCrmClient(requests.Session):
     def _build_url(self, endpoint):
         return urljoin(self.base_url, endpoint.lstrip("/"))
 
+
     def request(self, method, url, *args, **kwargs):
         resp = super().request(method, url, *args, **kwargs)
         resp.raise_for_status()
@@ -102,16 +103,25 @@ class ZohoCrmClient(BaseZohoCrmClient):
         }
         return self.post(self._build_url("/Contacts/upsert"), params=params, json=payload).json()
 
-    def update_contact(self, payload):
-        return self.put(self._build_url("/Contacts"), json=payload).json()
+    def update_contacts(self, payload):
+        return self.generic_update("Contacts", payload=payload)
 
-    def create_contact(self, payload):
-        return self.post(self._build_url("/Contacts"), json=payload).json()
+    def create_contacts(self, payload):
+        return self.generic_create("Contacts", payload=payload)
 
-    def delete_contact(self, ids):
+    def delete_contacts(self, ids):
+        return self.generic_delete("Contacts", ids)
+
+    def generic_update(self, module, payload):
+        return self.put(self._build_url(module), json=payload).json()
+
+    def generic_create(self, module, payload):
+        return self.post(self._build_url(module), json=payload).json()
+
+    def generic_delete(self, module, ids):
         if len(ids) > 100:
             raise ValueError("Maximum 100 ids can be deleted at one time")
         return self.delete(
-            self._build_url("/Contacts"),
-            params={"ids": ','.join(map(str, ids))}
+            self._build_url(module),
+            params={"ids": ','.join(map(lambda x: str(x).strip(), ids))}
         ).json()

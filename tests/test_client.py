@@ -30,15 +30,15 @@ def test_upserting_and_deleting_contact(credentials):
         "data": [
             {
                 "First_Name": "Keboola Writer",
-                "Last_Name": "Can be deleted",
-                "Description": "Upserted at {}".format(datetime.datetime.utcnow())
+                "Last_Name": "Can Be Deleted",
+                "Description": "Upserted at {}Z".format(datetime.datetime.utcnow())
             }
         ]
     }
-    created_resp = client.upsert_contact(payload=data, duplicate_check_fields='First_Name,Last_Name')
+    created_resp = client.create_contacts(payload=data)
     contact = created_resp['data'][0]
     assert contact['status'] == 'success'
 
     contact_id = contact['details']['id']
-    delete_resp = client.delete_contact(ids=[contact_id])
+    delete_resp = client.delete_contacts(ids=[contact_id])
     assert delete_resp['data'][0]['status'] == 'success'

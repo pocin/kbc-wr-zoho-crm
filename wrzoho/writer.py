@@ -36,6 +36,12 @@ def parse_input_csv(path):
         for line in reader:
             yield jsontangle.tangle(line)
 
+def parse_input_do_action(path_csv, client):
+    # update_contact
+    action_entity = path_csv.stem
+
+
+
 def main():
     pass
 
