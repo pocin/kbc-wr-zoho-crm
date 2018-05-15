@@ -26,8 +26,3 @@ deploy:
   script: "./deploy.sh"
   on:
     tags: true
-
-branches:
-  only:
-    - master
-    - /\d+\.\d+\.\d+/
