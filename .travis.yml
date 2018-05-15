@@ -8,7 +8,14 @@ before_script:
   - docker build . -t $APP_IMAGE
 
 script:
-  - docker run $APP_IMAGE python3 -m pytest
+  - "docker run -rm \
+    -e ZOHO_CLIENT_ID \
+    -e ZOHO_CLIENT_SECRET \
+    -e ZOHO_REDIRECT_URI \
+    -e ZOHO_REFRESH_TOKEN \
+    -e ZOHO_BASE_URL \
+    -e ZOHO_BASE_TOKENS_URL \
+    $APP_IMAGE python3 -m pytest"
 
 after_success:
   - docker images
