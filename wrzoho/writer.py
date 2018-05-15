@@ -3,6 +3,11 @@ import json
 import re
 import jsontangle
 from itertools import zip_longest, takewhile
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
+# logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
 AVAILABLE_MODULES = {"leads", "accounts", "contacts", "deals", "campaigns",
                      "cases", "solutions", "products", "vendors", "pricebooks",
@@ -54,18 +59,43 @@ def parse_input_do_action(path_csv, client):
     # update_contact
     action, module = decide_action_from_filename(path_csv)
     serialized_rows = parse_input_csv(path_csv)
+    if action == "delete":
+        yield from _do_delete(client, serialized_rows)
+    else:
+        yield from _do_update_create(client, serialized_rows, action=action, module=module)
 
 
+def _do_update_create(client, input_rows, action, module):
+    """
+
+    """
+    logger.info("Doing action '%s' on module '%s'", action, module)
+    # the api call takes max 100 rows in one request
+
+    for chunk in chunk_input_rows(input_rows, n=100):
+        logger.info("Processing chunk")
+        payload = {"data": list(chunk)}
+        json_response = getattr(client, 'generic_' + action)(module=module, payload=payload)
+        logger.info("Batch processed %s", json_response)
+        yield json_response
+
+def _do_delete(client, input_rows):
+    """
+
+    """
+    raise NotImplementedError("TODO: need to pass the ids as params in querystring")
 
 def chunk_input_rows(iterable, n=100):
 
     # https://docs.python.org/3/library/itertools.html#itertools-recipes
+    logger.debug("Chunking input rows for the api")
     args = [iter(iterable)] * n
     for chunk in zip_longest(*args):
         yield takewhile(lambda x: x is not None, chunk)
 
 
 def decide_action_from_filename(path_csv):
+    logging.debug("Figuring out what to do with csv '%s'", path_csv)
     action_module = path_csv.stem
     valid_fname_pattern = re.compile(r'^(?P<action>create|update|delete)_(?P<module>\w+)')
     parts = valid_fname_pattern.match(action_module)

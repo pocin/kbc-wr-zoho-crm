@@ -57,3 +57,16 @@ def test_grouping_input_data():
     # [{"foo": 5}, {"foo": 6}]
     last_element = last_chunk[-1]
     assert last_element['foo'] == 6
+
+
+def test_grouping_input_data_1_record():
+    rows = ({"foo": i} for i in range(1))
+    chunks = list(wrzoho.writer.chunk_input_rows(rows, n=5))
+    # there are two chunks
+    assert len(chunks) == 1
+    # first has 5 elements (n=5 above)
+    only_chunk = list(chunks[0])
+    assert len(only_chunk) == 1
+    # [{"foo": 5}, {"foo": 6}]
+    last_element = only_chunk[-1]
+    assert last_element['foo'] == 0

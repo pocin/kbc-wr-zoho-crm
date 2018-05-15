@@ -1,12 +1,16 @@
 import requests
 from urllib.parse import urljoin, urlsplit, parse_qsl
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
-
+# logger.addHandler(logging.StreamHandler(stream=sys.stdout))
 
 class BaseZohoCrmClient(requests.Session):
-    def __init__(self, redirect_uri, client_id, client_secret, refresh_token=None, base_url='https://www.zohoapis.com/crm/v2/'):
+    def __init__(self, redirect_uri, client_id, client_secret,
+                 refresh_token=None,
+                 base_url='https://www.zohoapis.com/crm/v2/',
+                 base_tokens_url='https://accounts.zoho.com/crm/oauth/v2/'):
         super().__init__()
         self.redirect_uri = redirect_uri
         self.client_id = client_id
@@ -14,6 +18,7 @@ class BaseZohoCrmClient(requests.Session):
         self.refresh_token = refresh_token
         self._access_token = None
         self.base_url = base_url
+        self.base_tokens_url = base_tokens_url
 
         if refresh_token is not None:
             self.refresh_access_token()
@@ -35,7 +40,7 @@ class BaseZohoCrmClient(requests.Session):
 
 
     def authorization_url(self, scope='ZohoCRM.modules.ALL'):
-        return ('https://accounts.zoho.com/oauth/v2/auth'
+        return (urljoin(self.base_tokens_url, 'auth') +
                 '?scope={scope}'
                 '&client_id={client_id}'
                 '&response_type=code'
@@ -49,7 +54,7 @@ class BaseZohoCrmClient(requests.Session):
 
         token = grant_token or dict(parse_qsl(urlsplit(url_with_grant_token).query))['code']
 
-        url = "https://accounts.zoho.com/oauth/v2/token"
+        url = urljoin(self.base_tokens_url, "token")
 
         params = {
             "code": grant_token,
@@ -70,7 +75,7 @@ class BaseZohoCrmClient(requests.Session):
             raise ValueError(
                 "refresh_token must be set before getting access tokens")
 
-        url = "https://accounts.zoho.com/oauth/v2/token"
+        url = urljoin(self.base_tokens_url, "token")
         params = {
             "refresh_token": self.refresh_token,
             "client_id": self.client_id,
@@ -91,6 +96,7 @@ class BaseZohoCrmClient(requests.Session):
 
 
     def request(self, method, url, *args, **kwargs):
+        logger.debug("Making %s request to %s", method, url)
         resp = super().request(method, url, *args, **kwargs)
         resp.raise_for_status()
         return resp
